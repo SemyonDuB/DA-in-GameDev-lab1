@@ -159,68 +159,93 @@ behaviors:
 ```
 
 ## Задание 3
+### Доработайте сцену и обучите ML-Agent таким образом, чтобы шар перемещался между двумя кубами разного цвета. Кубы должны, как и в первом задании, случайно изменять координаты на плоскости.
 
-### Изучить код на Python и ответить на вопросы:
-- Должна ли величина loss стремиться к нулю при изменении исходных данных? Ответьте на вопрос, приведите пример выполнения кода, который подтверждает ваш ответ.
+Используя уже обученную модель, сделал так чтобы цель менялась после того как шар достиг первого куба.
 
-loss может стремиться к нулю при `b = 0` и `x = y`, либо при значениях `x` и `y` стремящихся к нулю:
+```cs
+using UnityEngine;
+using Unity.MLAgents;
+using Unity.MLAgents.Sensors;
+using Unity.MLAgents.Actuators;
+using Random = UnityEngine.Random;
 
-```py
-loss = loss_function(1,0,x, x)
+public class RollerAgent : Agent
+{
+    Rigidbody rBody;
+    // Start is called before the first frame update
+    void Start()
+    {
+        rBody = GetComponent<Rigidbody>();
+        Target = firstTarget;
+    }
 
-loss = loss_function(2,0,x*10**(-30), y*10**(-30))
+    public Transform firstTarget;
+    public Transform secondTarget;
+
+    private Transform Target;
+    
+    public override void OnEpisodeBegin()
+    {
+        if (this.transform.localPosition.y < 0)
+        {
+            this.rBody.angularVelocity = Vector3.zero;
+            this.rBody.velocity = Vector3.zero;
+            this.transform.localPosition = new Vector3(0, 0.5f, 0);
+        }
+
+        if (Target == firstTarget)
+        {
+            Target = secondTarget;
+        }
+        else
+        {
+            Target = firstTarget;
+            secondTarget.localPosition = new Vector3(Random.value * 8-4, 0.5f, Random.value * 8-4);
+            firstTarget.localPosition = new Vector3(Random.value * 8-4, 0.5f, Random.value * 8-4);
+        }
+    }
+    
+    public override void CollectObservations(VectorSensor sensor)
+    {
+        sensor.AddObservation(Target.localPosition);
+        sensor.AddObservation(this.transform.localPosition);
+        sensor.AddObservation(rBody.velocity.x);
+        sensor.AddObservation(rBody.velocity.z);
+    }
+    
+    public float forceMultiplier = 10;
+    
+    public override void OnActionReceived(ActionBuffers actionBuffers)
+    {
+        Vector3 controlSignal = Vector3.zero;
+        controlSignal.x = actionBuffers.ContinuousActions[0];
+        controlSignal.z = actionBuffers.ContinuousActions[1];
+        rBody.AddForce(controlSignal * forceMultiplier);
+
+        float distanceToTarget = Vector3.Distance(transform.localPosition, Target.localPosition);
+
+        if(distanceToTarget < 1.42f)
+        {
+            SetReward(1.0f);
+            EndEpisode();
+        }
+        else if (this.transform.localPosition.y < 0)
+        {
+            EndEpisode();
+        }
+    }
+}
+
 ```
 
-```
-0.0
-
-2.8440000000000007e-58
-```
-
-
-
-Но при случайных данных и соблюдении условия, что `x != y` и `b != 0` величина `loss` не стремится к нулю:
-```py
-loss = loss_function(a, b, x, y)
-```
-
-```
-1166.2355680022215
-```
-
-- Какова роль параметра Lr? Ответьте на вопрос, приведите пример выполнения кода, который подтверждает ваш ответ. В качестве эксперимента можете изменить значение параметра.
-
-Lr уменьшает на бесконечно малое число значения `a` и `b`, то есть чем меньше Lr тем меньше изменятся `a` и `b`, чем больше Lr, тем сильнее изменятся `a` и `b`.
-
-При бесконечно малом Lr:
-
-```py
-Lr = 10**(-10)
-print(f"a = {a},  b = {b}")
-print(optimize(a,b,x,y))
-```
-
-```
-a = [0.9616939],  b = [0.17136955]
-a = [0.96169415],  b = [0.17136955]
-```
-
-При относительно небольшом Lr:
-
-```py
-Lr = 1
-print(f"a = {a},  b = {b}")
-print(optimize(a,b,x,y))
-```
-
-```
-a = [0.9616939],  b = [0.17136955]
-a = [2477.84371326], b = [34.83103144]
-```
+![Lab3 - SampleScene - Windows, Mac, Linux - Unity 2021 3 9f1 _DX11_ 2022-10-26 18-18-13](https://user-images.githubusercontent.com/45539357/198037169-b24f2d49-2a93-4eec-8a13-f8ace6fe97e8.gif)
 
 ## Выводы
 
-В ходе лабораторной работы я научился взаимодействовать с google.colab, просматривать графики и анализировать алгоритм работы программ. Кроме того научился работать в github и ознакомился с основными операторами зыка Python на примере реализации линейной регрессии.
+В ходе лабораторной работы я узнал об платформе anaconda и как работать с ней. 
+Разобрался в основах MlAgent для Unity и его интеграцией с python и pytorch. 
+Понял каким образом происходит обучение модели в ML и как применять эту модель в дальнейшем.
 
 ## Приложение
 [ссылка на блокнот в google.colab](https://colab.research.google.com/drive/1rXT8cx4VNWsd0JEJmZ3KINgqZyst13XO?usp=sharing)
