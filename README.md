@@ -221,9 +221,6 @@ public class Perceptron : MonoBehaviour
 В ходе лабораторной работы я ознакомился с алгоритмом работы перцептрона. Реализовал несколько перцептронов, выполняющих вышеизложенные операции.
 Построил графики завимостей количества эпох от ошибки обучения. А также сделал визуальную модель работы перцептрона, демонстрирующую возможное применение перцептрона.
 
-## Приложение
-[ссылка на блокнот в google.colab](https://colab.research.google.com/drive/1rXT8cx4VNWsd0JEJmZ3KINgqZyst13XO?usp=sharing)
-
 ## Powered by
 
 **BigDigital Team: Denisov | Fadeev | Panov**
