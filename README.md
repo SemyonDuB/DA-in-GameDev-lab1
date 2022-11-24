@@ -88,11 +88,138 @@
 Для уменьшения вероятности появления `totalError` большее нуля необходимо увеличивать количество эпох. При значении эпох равное 8 и более, появление не нулевой ошибки крайне мало. Но для операции `XOR` это правило не работает.
 
 ## Задание 3
-### Изучить код на Python и ответить на вопросы:
+### Построить визуальную модель работы перцептрона
+
+![Lab4 - SampleScene - Windows, Mac, Linux - Unity 2021 3 9f1_ _DX11_ 2022-11-24 23-28-46](https://user-images.githubusercontent.com/45539357/203848264-c3bdaeba-c1f8-4d09-a2d2-b5b203661447.gif)
+
+Для нижних кубов добавил следующий скипт перцептрона, настроил набор данных для соответсвующих моделей перцептрона (OR, AND):
+```cs
+using System;
+using UnityEngine;
+using Random = UnityEngine.Random;
+
+[System.Serializable]
+public class TrainingSet
+{
+	public double[] input;
+	public double output;
+	}
+
+public class Perceptron : MonoBehaviour
+{
+	public TrainingSet[] ts;
+	public int _epochs = 0;
+	double[] weights = { 0, 0 };
+	double bias = 0;
+	double totalError = 0;
+
+	double DotProductBias(double[] v1, double[] v2)
+	{
+		if (v1 == null || v2 == null)
+			return -1;
+
+		if (v1.Length != v2.Length)
+			return -1;
+
+		double d = 0;
+		for (int x = 0; x < v1.Length; x++)
+		{
+			d += v1[x] * v2[x];
+		}
+
+		d += bias;
+
+		return d;
+	}
+
+	double CalcOutput(int i)
+	{
+		double dp = DotProductBias(weights, ts[i].input);
+		if (dp > 0) return (1);
+		return (0);
+	}
+
+	void InitialiseWeights()
+	{
+		for (int i = 0; i < weights.Length; i++)
+		{
+			weights[i] = Random.Range(-1.0f, 1.0f);
+		}
+		bias = Random.Range(-1.0f, 1.0f);
+	}
+
+	void UpdateWeights(int j)
+	{
+		double error = ts[j].output - CalcOutput(j);
+		totalError += Mathf.Abs((float) error);
+		for (int i = 0; i < weights.Length; i++)
+		{
+			weights[i] = weights[i] + error * ts[j].input[i];
+		}
+		bias += error;
+	}
+
+	double CalcOutput(double i1, double i2)
+	{
+		double[] inp = new double[] { i1, i2 };
+		double dp = DotProductBias(weights, inp);
+		if (dp > 0) return (1);
+		return (0);
+	}
+
+	void Train(int epochs)
+	{
+		InitialiseWeights();
+
+		for (int e = 0; e < epochs; e++)
+		{
+			totalError = 0;
+			for (int t = 0; t < ts.Length; t++)
+			{
+				UpdateWeights(t);
+				Debug.Log("W1: " + (weights[0]) + " W2: " + (weights[1]) + " B: " + bias);
+			}
+			Debug.Log("TOTAL ERROR: " + totalError);
+		}
+	}
+
+	void Start()
+	{
+		Train(_epochs);
+		Debug.Log("Epochs: " + _epochs);
+		Debug.Log("Test 0 0: " + CalcOutput(0, 0));
+		Debug.Log("Test 0 1: " + CalcOutput(0, 1));
+		Debug.Log("Test 1 0: " + CalcOutput(1, 0));
+		Debug.Log("Test 1 1: " + CalcOutput(1, 1));
+	}
+
+	void Update()
+	{
+	}
+
+	private void OnCollisionEnter(Collision collision)
+	{
+		if (collision.gameObject.name == "Plane")
+			return;
+
+		var mesh = GetComponent<MeshRenderer>();
+		var otherMesh = collision.gameObject.GetComponent<MeshRenderer>();
+
+		var colId = mesh.material.color == Color.black ? 1 : 0;
+		var otherColId = otherMesh.material.color == Color.black ? 1 : 0;
+
+
+		var result = Math.Abs(CalcOutput(colId, otherColId) - 1) < 0.1 ? Color.black : Color.white;
+		otherMesh.material.color = result;
+		mesh.material.color = result;
+	}
+}
+```
 
 ## Выводы
 
-В ходе лабораторной работы я научился взаимодействовать с google.colab, просматривать графики и анализировать алгоритм работы программ. Кроме того научился работать в github и ознакомился с основными операторами зыка Python на примере реализации линейной регрессии.
+В ходе лабораторной работы я ознакомился с алгоритмом работы перцептрона. Реализовал несколько перцептронов, выполняющих выжеизложенные операции.
+Построил графики завимостей количества эпох от ошибки обучения. А также сделал визуальную модель работы перцептрона, демонстрирующую возможное применение перцептрона.
 
 ## Приложение
 [ссылка на блокнот в google.colab](https://colab.research.google.com/drive/1rXT8cx4VNWsd0JEJmZ3KINgqZyst13XO?usp=sharing)
