@@ -1,5 +1,5 @@
 # АНАЛИЗ ДАННЫХ И ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ [in GameDev]
-Отчет по лабораторной работе #4 выполнил:
+Отчет по лабораторной работе #5 выполнил:
 - Дубских Семён Николаевич
 - РИ210950
 Отметка о выполнении заданий (заполняется студентом):
@@ -35,35 +35,22 @@
 - ✨Magic ✨
 
 ## Цель работы
-Ознакомиться с алгоритмом работы "Перцептрона".
+Интеграция экономической системы в проект Unity и обучение ML-Agent.
 
 ## Задание 1
-### Реализовать перцептрон, который умеет производить вычисления:
+### Измените параметры файла .yaml-агента и определить какие параметры и как влияют на обучение модели.
 
-- OR | Дать комментарии о корректности работы
+* Параметры по умолчанию. График `Cumulative Reward` возрастает монотонно верх, в виде логарифмической функции:
 
-Перцептрон работает при значении эпох равное 4. При меньшем значении периодически возникают ошибки в работе перцептрона.
+![до изменений](https://user-images.githubusercontent.com/45539357/204099825-6908e57d-9b0d-40d1-94d1-55b1a182c1c0.png)
 
-![изображение](https://user-images.githubusercontent.com/45539357/203804428-e392cad7-5318-4d65-b48f-aaa1d2de7c70.png)
+* Параметр `learning_rate = 1.0e-5`. График сначала экспоненциально возрастает, дальше параболически убывает. 
+Другими словами вознаграждение за обучение достигла пика и начало опускаться:
 
-- AND
+![learning_rate1e-5](https://user-images.githubusercontent.com/45539357/204099751-c8118901-6325-435c-84cd-d609d21b308e.png)
 
-Перцептрон работает при значении эпох не меньше 5.
+* 
 
-![изображение](https://user-images.githubusercontent.com/45539357/203809143-27e2a061-a8c2-47bb-948b-d97bb51692c0.png)
-
-- NAND
-
-Аналогично AND.
-
-![изображение](https://user-images.githubusercontent.com/45539357/203809743-18f15a0b-f9ca-41e3-ba04-48f764a87bb2.png)
-
-
-- XOR
-
-Не работает совсем при любом значении эпох. `totalError` не превышал 4 и не был ниже 2.
-
-![изображение](https://user-images.githubusercontent.com/45539357/203811825-ed479dd3-99a9-44ac-852b-33f82d94d6e4.png)
 
 ## Задание 2
 ### Построить графики зависимости количества эпох от ошибки обучения. Указать от чего зависит необходимое количество эпох обучения.
@@ -86,135 +73,6 @@
 
 
 Для уменьшения вероятности появления `totalError` большее нуля необходимо увеличивать количество эпох. При значении эпох равное 8 и более, появление не нулевой ошибки крайне мало. Но для операции `XOR` это правило не работает.
-
-## Задание 3
-### Построить визуальную модель работы перцептрона
-
-![Lab4 - SampleScene - Windows, Mac, Linux - Unity 2021 3 9f1_ _DX11_ 2022-11-24 23-28-46](https://user-images.githubusercontent.com/45539357/203848264-c3bdaeba-c1f8-4d09-a2d2-b5b203661447.gif)
-
-Для нижних кубов добавил следующий скипт перцептрона, настроил набор данных для соответсвующих моделей перцептрона (OR, AND):
-```cs
-using System;
-using UnityEngine;
-using Random = UnityEngine.Random;
-
-[System.Serializable]
-public class TrainingSet
-{
-	public double[] input;
-	public double output;
-	}
-
-public class Perceptron : MonoBehaviour
-{
-	public TrainingSet[] ts;
-	public int _epochs = 0;
-	double[] weights = { 0, 0 };
-	double bias = 0;
-	double totalError = 0;
-
-	double DotProductBias(double[] v1, double[] v2)
-	{
-		if (v1 == null || v2 == null)
-			return -1;
-
-		if (v1.Length != v2.Length)
-			return -1;
-
-		double d = 0;
-		for (int x = 0; x < v1.Length; x++)
-		{
-			d += v1[x] * v2[x];
-		}
-
-		d += bias;
-
-		return d;
-	}
-
-	double CalcOutput(int i)
-	{
-		double dp = DotProductBias(weights, ts[i].input);
-		if (dp > 0) return (1);
-		return (0);
-	}
-
-	void InitialiseWeights()
-	{
-		for (int i = 0; i < weights.Length; i++)
-		{
-			weights[i] = Random.Range(-1.0f, 1.0f);
-		}
-		bias = Random.Range(-1.0f, 1.0f);
-	}
-
-	void UpdateWeights(int j)
-	{
-		double error = ts[j].output - CalcOutput(j);
-		totalError += Mathf.Abs((float) error);
-		for (int i = 0; i < weights.Length; i++)
-		{
-			weights[i] = weights[i] + error * ts[j].input[i];
-		}
-		bias += error;
-	}
-
-	double CalcOutput(double i1, double i2)
-	{
-		double[] inp = new double[] { i1, i2 };
-		double dp = DotProductBias(weights, inp);
-		if (dp > 0) return (1);
-		return (0);
-	}
-
-	void Train(int epochs)
-	{
-		InitialiseWeights();
-
-		for (int e = 0; e < epochs; e++)
-		{
-			totalError = 0;
-			for (int t = 0; t < ts.Length; t++)
-			{
-				UpdateWeights(t);
-				Debug.Log("W1: " + (weights[0]) + " W2: " + (weights[1]) + " B: " + bias);
-			}
-			Debug.Log("TOTAL ERROR: " + totalError);
-		}
-	}
-
-	void Start()
-	{
-		Train(_epochs);
-		Debug.Log("Epochs: " + _epochs);
-		Debug.Log("Test 0 0: " + CalcOutput(0, 0));
-		Debug.Log("Test 0 1: " + CalcOutput(0, 1));
-		Debug.Log("Test 1 0: " + CalcOutput(1, 0));
-		Debug.Log("Test 1 1: " + CalcOutput(1, 1));
-	}
-
-	void Update()
-	{
-	}
-
-	private void OnCollisionEnter(Collision collision)
-	{
-		if (collision.gameObject.name == "Plane")
-			return;
-
-		var mesh = GetComponent<MeshRenderer>();
-		var otherMesh = collision.gameObject.GetComponent<MeshRenderer>();
-
-		var colId = mesh.material.color == Color.black ? 1 : 0;
-		var otherColId = otherMesh.material.color == Color.black ? 1 : 0;
-
-
-		var result = Math.Abs(CalcOutput(colId, otherColId) - 1) < 0.1 ? Color.black : Color.white;
-		otherMesh.material.color = result;
-		mesh.material.color = result;
-	}
-}
-```
 
 ## Выводы
 
